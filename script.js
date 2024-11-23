@@ -183,7 +183,6 @@ async function getNetflixWatchHistory() {
   let textContent = "Netflix Watch History Summary\n";
   textContent += "==========================\n\n";
   textContent += `Total Items: ${watchHistory.length}\n`;
-  textContent += `Max Entries Setting: ${MAX_ENTRIES}\n\n`;
   textContent += "Watch Time Statistics:\n";
   textContent += `-----------------\n`;
   textContent += `Total Minutes: ${durationStats.totalMinutes}\n`;
