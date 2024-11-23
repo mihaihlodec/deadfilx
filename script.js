@@ -49,7 +49,6 @@ async function fetchDuration(videoId) {
   }
 }
 
-// Configuration constant for limiting entries
 const MAX_ENTRIES = 5; // Set this to any number you want, or -1 for all entries
 
 function calculateTotalDuration(watchHistory) {
@@ -178,29 +177,45 @@ async function getNetflixWatchHistory() {
 
   const durationStats = calculateTotalDuration(watchHistory);
 
-  const outputData = {
-    summary: {
-      totalItems: watchHistory.length,
-      maxEntriesSetting: MAX_ENTRIES,
-      watchTime: {
-        totalMinutes: durationStats.totalMinutes,
-        totalHours: durationStats.hours,
-        totalDays: durationStats.days,
-        formatted: `${durationStats.days} days, ${durationStats.remainingHours} hours, and ${durationStats.remainingMinutes} minutes`,
-      },
-    },
-    watchHistory: watchHistory,
-  };
+  // Create text file content directly from watchHistory and durationStats
+  let textContent = "Netflix Watch History Summary\n";
+  textContent += "==========================\n\n";
+  textContent += `Total Items: ${watchHistory.length}\n`;
+  textContent += `Max Entries Setting: ${MAX_ENTRIES}\n\n`;
+  textContent += "Watch Time Statistics:\n";
+  textContent += `-----------------\n`;
+  textContent += `Total Minutes: ${durationStats.totalMinutes}\n`;
+  textContent += `Total Hours: ${durationStats.hours}\n`;
+  textContent += `Total Days: ${durationStats.days}\n`;
+  textContent += `Formatted Time: ${durationStats.days} days, ${durationStats.remainingHours} hours, and ${durationStats.remainingMinutes} minutes\n\n`;
 
-  const dataStr = JSON.stringify(outputData, null, 2);
+  // Add the contribution graph
+  let textContentForDownload = textContent;
+
+  displayGraphInBrowser(textContent);
+  textContentForDownload += createHorizontalContributionGraph(watchHistory);
+
+  textContentForDownload += "Watch History:\n";
+  textContentForDownload += "-------------\n";
+  textContentForDownload +=
+    "Title".padEnd(50) + "Date".padEnd(15) + "Duration\n";
+  textContentForDownload += "=".repeat(75) + "\n";
+
+  watchHistory.forEach((entry) => {
+    textContentForDownload += entry.title.substring(0, 47).padEnd(50);
+    textContentForDownload += entry.date.padEnd(15);
+    textContentForDownload += entry.duration + "\n";
+  });
   const dataUri =
-    "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+    "data:text/plain;charset=utf-8," +
+    encodeURIComponent(textContentForDownload);
   const linkElement = document.createElement("a");
   linkElement.setAttribute("href", dataUri);
-  linkElement.setAttribute("download", "netflix-history.json");
+  linkElement.setAttribute("download", "netflix-history.txt");
   linkElement.click();
 
-  return outputData;
+  // Return watchHistory for console use
+  return watchHistory;
 }
 
 // Run the script
@@ -211,3 +226,260 @@ getNetflixWatchHistory()
   .catch((error) => {
     console.error("Error processing watch history:", error);
   });
+
+function createContributionGraph(watchHistory) {
+  // Group watch history by year
+  const watchesByYear = {};
+  watchHistory.forEach((entry) => {
+    const date = new Date(entry.date);
+    const year = date.getFullYear();
+    // Format date as YYYY-MM-DD for consistent comparison
+    const formattedDate = date.toISOString().split("T")[0];
+    if (!watchesByYear[year]) {
+      watchesByYear[year] = new Set();
+    }
+    watchesByYear[year].add(formattedDate);
+  });
+
+  let graphOutput = "Viewing Activity Graph:\n";
+  graphOutput += "=====================\n\n";
+
+  // Days of the week labels
+  const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  Object.keys(watchesByYear)
+    .sort()
+    .forEach((year) => {
+      const daysWatched = watchesByYear[year];
+      console.log(`Days watched in ${year}: ${daysWatched.size}`);
+      graphOutput += `Year ${year}:\n\n`;
+
+      // Create the contribution graph
+      const startDate = new Date(year, 0, 1);
+      const endDate = new Date(year, 11, 31);
+
+      // Create array for each day of week
+      const weeks = [];
+      let currentDate = new Date(startDate);
+      let currentWeek = [];
+
+      // Fill in any days before the first day of the year
+      const firstDayOffset = startDate.getDay();
+      for (let i = 0; i < firstDayOffset; i++) {
+        currentWeek.push(null);
+      }
+
+      while (currentDate <= endDate) {
+        if (currentDate <= new Date()) {
+          currentWeek.push(currentDate.toISOString().split("T")[0]);
+        } else {
+          currentWeek.push(null); // Future dates will be treated as null
+        }
+
+        if (currentWeek.length === 7) {
+          weeks.push(currentWeek);
+          currentWeek = [];
+        }
+
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      // Fill in any remaining days in the last week
+      while (currentWeek.length < 7) {
+        currentWeek.push(null);
+      }
+      if (currentWeek.length) weeks.push(currentWeek);
+
+      const today = new Date();
+      const currentWeekNumber = Math.ceil(
+        (today - new Date(today.getFullYear(), 0, 1)) /
+          (7 * 24 * 60 * 60 * 1000)
+      );
+
+      graphOutput += "    "; // Reduced from 5 spaces to 4 to align with 3-letter day names
+      for (let week = 1; week <= weeks.length; week++) {
+        if (
+          year < today.getFullYear() ||
+          (year == today.getFullYear() && week <= currentWeekNumber)
+        ) {
+          // Pad single-digit weeks with a leading zero to maintain alignment
+          const weekNum = week < 10 ? ` W${week}` : `W${week}`;
+          graphOutput += weekNum.padEnd(4);
+        }
+      }
+      graphOutput += "\n";
+
+      // Print each day of the week
+      for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+        graphOutput += `${daysOfWeek[dayIndex]} `; // 3 letters + 1 space = 4 characters
+
+        for (let weekIndex = 0; weekIndex < weeks.length; weekIndex++) {
+          const date = weeks[weekIndex][dayIndex];
+          if (date === null) {
+            graphOutput += "   "; // 3 spaces for null dates
+          } else {
+            const hasWatch = daysWatched.has(date);
+            graphOutput += hasWatch ? "██  " : "░░  ";
+          }
+        }
+        graphOutput += "\n";
+      }
+
+      graphOutput += "\nTotal days watched in ${year}: ${daysWatched.size}\n";
+      graphOutput += "Legend: █ = Watched, ░ = No Activity\n\n";
+    });
+
+  return graphOutput;
+}
+
+function createHorizontalContributionGraph(watchHistory) {
+  // Group watch history by year
+  const watchesByYear = {};
+  watchHistory.forEach((entry) => {
+    const date = new Date(entry.date);
+    const year = date.getFullYear();
+    const formattedDate = date.toISOString().split("T")[0];
+    if (!watchesByYear[year]) {
+      watchesByYear[year] = new Set();
+    }
+    watchesByYear[year].add(formattedDate);
+  });
+
+  let graphOutput = "\nViewing Activity Graph (Horizontal):\n";
+  graphOutput += "================================\n\n";
+
+  const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const today = new Date();
+
+  Object.keys(watchesByYear)
+    .sort()
+    .forEach((year) => {
+      const daysWatched = watchesByYear[year];
+      graphOutput += `Year ${year}:\n\n`;
+
+      // Create the weeks array
+      const startDate = new Date(year, 0, 1);
+      const endDate = new Date(year, 11, 31);
+      const weeks = [];
+      let currentDate = new Date(startDate);
+      let currentWeek = [];
+
+      // Fill in any days before the first day of the year
+      const firstDayOffset = startDate.getDay();
+      for (let i = 0; i < firstDayOffset; i++) {
+        currentWeek.push(null);
+      }
+
+      while (currentDate <= endDate) {
+        if (currentDate <= today) {
+          currentWeek.push(currentDate.toISOString().split("T")[0]);
+        } else {
+          currentWeek.push(null);
+        }
+
+        if (currentWeek.length === 7) {
+          weeks.push(currentWeek);
+          currentWeek = [];
+        }
+
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      // Fill in any remaining days in the last week
+      while (currentWeek.length < 7) {
+        currentWeek.push(null);
+      }
+      if (currentWeek.length) weeks.push(currentWeek);
+
+      // Display header with day names
+      graphOutput += "    "; // 4 spaces before week numbers
+      daysOfWeek.forEach((day) => {
+        graphOutput += day.padEnd(4);
+      });
+      graphOutput += "\n";
+
+      // Display each week on its own line
+      weeks.forEach((week, weekIndex) => {
+        if (
+          weekIndex <
+            Math.ceil(
+              (today - new Date(today.getFullYear(), 0, 1)) /
+                (7 * 24 * 60 * 60 * 1000)
+            ) ||
+          year < today.getFullYear()
+        ) {
+          graphOutput += `W${String(weekIndex + 1).padStart(2, "0")}: `;
+
+          week.forEach((date) => {
+            if (date === null) {
+              graphOutput += "    "; // Just 4 spaces for null dates (no symbols)
+            } else {
+              const hasWatch = daysWatched.has(date);
+              graphOutput += hasWatch ? "██  " : "░░  ";
+            }
+          });
+          graphOutput += "\n";
+        }
+      });
+
+      graphOutput += `\nTotal days watched in ${year}: ${daysWatched.size}\n`;
+      graphOutput += "Legend: █ = Watched, ░ = No Activity\n\n";
+    });
+
+  return graphOutput;
+}
+
+function displayGraphInBrowser(graphOutput) {
+  const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+  const popup = document.createElement("div");
+  popup.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: ${isDarkMode ? "#242424" : "white"};
+    color: ${isDarkMode ? "#e5e5e5" : "black"};
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    z-index: 10000;
+    width: 400px; /* approximately 10cm */
+    max-height: 600px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.2;
+  `;
+
+  // Add close button
+  const closeButton = document.createElement("button");
+  closeButton.textContent = "×";
+  closeButton.style.cssText = `
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    border: none;
+    background: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: ${isDarkMode ? "#e5e5e5" : "#666"};
+  `;
+  closeButton.onclick = () => popup.remove();
+
+  // Add content
+  const content = document.createElement("pre");
+  content.textContent = graphOutput;
+  content.style.cssText = `
+    margin: 0;
+    padding: 10px;
+    background: ${isDarkMode ? "#333" : "#f5f5f5"};
+    border-radius: 4px;
+    overflow-x: auto;
+    white-space: pre;
+  `;
+
+  popup.appendChild(closeButton);
+  popup.appendChild(content);
+  document.body.appendChild(popup);
+}
