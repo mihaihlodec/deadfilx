@@ -192,8 +192,10 @@ async function getNetflixWatchHistory() {
   // Add the contribution graph
   let textContentForDownload = textContent;
 
+  textContent += createHorizontalContributionGraph(watchHistory);
   displayGraphInBrowser(textContent);
-  textContentForDownload += createHorizontalContributionGraph(watchHistory);
+
+  textContentForDownload += createContributionGraph(watchHistory);
 
   textContentForDownload += "Watch History:\n";
   textContentForDownload += "-------------\n";
@@ -311,12 +313,12 @@ function createContributionGraph(watchHistory) {
 
       // Print each day of the week
       for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-        graphOutput += `${daysOfWeek[dayIndex]} `; // 3 letters + 1 space = 4 characters
+        graphOutput += `${daysOfWeek[dayIndex]} `;
 
         for (let weekIndex = 0; weekIndex < weeks.length; weekIndex++) {
           const date = weeks[weekIndex][dayIndex];
           if (date === null) {
-            graphOutput += "   "; // 3 spaces for null dates
+            graphOutput += "    "; // Four spaces for null dates (no symbols)
           } else {
             const hasWatch = daysWatched.has(date);
             graphOutput += hasWatch ? "██  " : "░░  ";
@@ -326,7 +328,7 @@ function createContributionGraph(watchHistory) {
       }
 
       graphOutput += "\nTotal days watched in ${year}: ${daysWatched.size}\n";
-      graphOutput += "Legend: █ = Watched, ░ = No Activity\n\n";
+      graphOutput += "Legend: ██ = Watched, ░░ = No Activity\n\n";
     });
 
   return graphOutput;
