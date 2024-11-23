@@ -328,7 +328,7 @@ function createContributionGraph(watchHistory) {
         graphOutput += "\n";
       }
 
-      graphOutput += "\nTotal days watched in ${year}: ${daysWatched.size}\n";
+      graphOutput += `\nTotal days watched in ${year}: ${daysWatched.size}\n`;
       graphOutput += "Legend: ██ = Watched, ░░ = No Activity\n\n";
     });
 
@@ -426,7 +426,7 @@ function createHorizontalContributionGraph(watchHistory) {
       });
 
       graphOutput += `\nTotal days watched in ${year}: ${daysWatched.size}\n`;
-      graphOutput += "Legend: █ = Watched, ░ = No Activity\n\n";
+      graphOutput += "Legend: ██ = Watched, ░░ = No Activity\n\n";
     });
 
   return graphOutput;
