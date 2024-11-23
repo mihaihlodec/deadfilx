@@ -49,7 +49,7 @@ async function fetchDuration(videoId) {
   }
 }
 
-const MAX_ENTRIES = 5; // Set this to any number you want, or -1 for all entries
+const MAX_ENTRIES = -1; // Set this to any number you want, or -1 for all entries
 
 function calculateTotalDuration(watchHistory) {
   const totalMinutes = watchHistory.reduce((sum, entry) => {
@@ -109,7 +109,9 @@ async function loadAllItems() {
     if (currentSize === previousSize) {
       attempts++;
       if (attempts >= maxAttempts) {
-        console.log("No more new items after multiple attempts, stopping.");
+        console.log(
+          "No more new items. Will continue with fetching duration for the ones we found..."
+        );
         break;
       }
     } else {
@@ -161,7 +163,7 @@ async function getNetflixWatchHistory() {
     };
 
     try {
-      console.log(`Fetching duration for: ${entry.title} (ID: ${videoId})`);
+      console.log(`Fetching duration for: ${entry.title}`);
       const duration = await fetchDuration(videoId);
       entry.duration = duration;
     } catch (error) {
