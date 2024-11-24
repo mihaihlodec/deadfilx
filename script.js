@@ -1,5 +1,6 @@
-const MAX_ENTRIES = 10; // Set this to any number you want, or -1 for all entries
+const MAX_ENTRIES = -1; // Set this to any number you want, or -1 for all entries
 const HOURLY_RATE = 45;
+const FETCH_DURATION_API_DELAY_MS = 250; // 250ms = 1/4 second
 
 async function fetchDuration(videoId) {
   try {
@@ -173,7 +174,9 @@ async function getNetflixWatchHistory() {
     }
 
     watchHistory.push(entry);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) =>
+      setTimeout(resolve, FETCH_DURATION_API_DELAY_MS)
+    );
   }
 
   console.table(watchHistory);
@@ -237,15 +240,27 @@ getNetflixWatchHistory()
 function createContributionGraph(watchHistory) {
   // Group watch history by year
   const watchesByYear = {};
+  const hoursPerYear = {};
+
   watchHistory.forEach((entry) => {
     const date = new Date(entry.date);
     const year = date.getFullYear();
-    // Format date as YYYY-MM-DD for consistent comparison
     const formattedDate = date.toISOString().split("T")[0];
+
+    // Initialize year data if not exists
     if (!watchesByYear[year]) {
       watchesByYear[year] = new Set();
+      hoursPerYear[year] = 0;
     }
+
+    // Add date to watched days
     watchesByYear[year].add(formattedDate);
+
+    // Add duration to year total
+    const minutes = parseInt(entry.duration);
+    if (!isNaN(minutes)) {
+      hoursPerYear[year] += minutes / 60;
+    }
   });
 
   let graphOutput = "Viewing Activity Graph:\n";
@@ -332,7 +347,10 @@ function createContributionGraph(watchHistory) {
         graphOutput += "\n";
       }
 
-      graphOutput += `\nTotal days watched in ${year}: ${daysWatched.size}\n`;
+      graphOutput += `\nTotal hours watched in ${year}: ${hoursPerYear[
+        year
+      ].toFixed(1)}\n`;
+      graphOutput += `Total days watched in ${year}: ${daysWatched.size}\n`;
       graphOutput += "Legend: ██ = Watched, ░░ = No Activity\n\n";
     });
 
@@ -342,14 +360,27 @@ function createContributionGraph(watchHistory) {
 function createHorizontalContributionGraph(watchHistory) {
   // Group watch history by year
   const watchesByYear = {};
+  const hoursPerYear = {};
+
   watchHistory.forEach((entry) => {
     const date = new Date(entry.date);
     const year = date.getFullYear();
     const formattedDate = date.toISOString().split("T")[0];
+
+    // Initialize year data if not exists
     if (!watchesByYear[year]) {
       watchesByYear[year] = new Set();
+      hoursPerYear[year] = 0;
     }
+
+    // Add date to watched days
     watchesByYear[year].add(formattedDate);
+
+    // Add duration to year total
+    const minutes = parseInt(entry.duration);
+    if (!isNaN(minutes)) {
+      hoursPerYear[year] += minutes / 60;
+    }
   });
 
   let graphOutput = "\nViewing Activity Graph (Horizontal):\n";
@@ -429,7 +460,10 @@ function createHorizontalContributionGraph(watchHistory) {
         }
       });
 
-      graphOutput += `\nTotal days watched in ${year}: ${daysWatched.size}\n`;
+      graphOutput += `\nTotal hours watched in ${year}: ${hoursPerYear[
+        year
+      ].toFixed(1)}\n`;
+      graphOutput += `Total days watched in ${year}: ${daysWatched.size}\n`;
       graphOutput += "Legend: ██ = Watched, ░░ = No Activity\n\n";
     });
 
