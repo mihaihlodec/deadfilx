@@ -1,3 +1,6 @@
+const MAX_ENTRIES = 10; // Set this to any number you want, or -1 for all entries
+const HOURLY_RATE = 45;
+
 async function fetchDuration(videoId) {
   try {
     const response = await fetch("https://web.prod.cloud.netflix.com/graphql", {
@@ -48,8 +51,6 @@ async function fetchDuration(videoId) {
     throw error;
   }
 }
-
-const MAX_ENTRIES = -1; // Set this to any number you want, or -1 for all entries
 
 function calculateTotalDuration(watchHistory) {
   const totalMinutes = watchHistory.reduce((sum, entry) => {
@@ -180,15 +181,18 @@ async function getNetflixWatchHistory() {
   const durationStats = calculateTotalDuration(watchHistory);
 
   // Create text file content directly from watchHistory and durationStats
-  let textContent = "Netflix Watch History Summary\n";
-  textContent += "==========================\n\n";
-  textContent += `Total Items: ${watchHistory.length}\n`;
-  textContent += "Watch Time Statistics:\n";
-  textContent += `-----------------\n`;
+  let textContent = "Summary of what you LOST just by watching Netflix\n";
+  textContent += "======================================================\n\n";
+  textContent += `TOTAL Time LOST: ${durationStats.days} days, ${durationStats.remainingHours} hours, and ${durationStats.remainingMinutes} minutes\n`;
+  textContent += `TOTAL Money$ LOST: ${(
+    durationStats.hours * HOURLY_RATE
+  ).toFixed(2)}$ considering you earn ${HOURLY_RATE}$ per hour\n\n`;
+
   textContent += `Total Minutes: ${durationStats.totalMinutes}\n`;
   textContent += `Total Hours: ${durationStats.hours}\n`;
   textContent += `Total Days: ${durationStats.days}\n`;
-  textContent += `Formatted Time: ${durationStats.days} days, ${durationStats.remainingHours} hours, and ${durationStats.remainingMinutes} minutes\n\n`;
+  textContent += `Total Items: ${watchHistory.length}\n`;
+  textContent += `------------------------------------------------------\n\n`;
 
   // Add the contribution graph
   let textContentForDownload = textContent;
@@ -418,7 +422,7 @@ function createHorizontalContributionGraph(watchHistory) {
               graphOutput += "    "; // Just 4 spaces for null dates (no symbols)
             } else {
               const hasWatch = daysWatched.has(date);
-              graphOutput += hasWatch ? "██  " : "░░  ";
+              graphOutput += hasWatch ? "██ " : "░░ ";
             }
           });
           graphOutput += "\n";
