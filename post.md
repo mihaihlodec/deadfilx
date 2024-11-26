@@ -71,6 +71,16 @@ I get to watch TV/Netflix at the end of the day. When I'm too tired or my brain 
 
 The solution? Create a relaxation plan.
 
+My plan to get this time back
+
 To mention:
+when energy high - 80%> work on side projects
+when energy medium - 50%> do house chores
+when energy mid low - 30%> read or walk
+when energy 0 - sleep, breathe, don't do anything. but FOR sure!!! don't watch any screen
+when
+when energy low
+when food craving
+when is summer/winter
 
 - my wife also watched Netflix - so family household hit doubles
