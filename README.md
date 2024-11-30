@@ -2,6 +2,11 @@
 
 This script analyzes your Netflix viewing history to show you detailed statistics about your watching habits, including total time spent and a visual activity graph.
 
+## Requirements
+
+Netflix account language must be set to English
+![Netflix Language Screenshot](screenshot2.png)
+
 ## How to Use
 
 1. Go to [Netflix Viewing Activity](https://www.netflix.com/settings/viewed)

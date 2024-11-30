@@ -1,4 +1,4 @@
-const MAX_ENTRIES = 5; // Set this to a number of titles you want to process, or -1 for all entries/episodes/movies
+const MAX_ENTRIES = -1; // Set this to a number of titles you want to process, or -1 for all entries/episodes/movies
 const HOURLY_RATE = 45;
 const FETCH_DURATION_API_DELAY_MS = 500; // 500ms = 1/2 second
 
@@ -200,7 +200,7 @@ async function getNetflixWatchHistory() {
   // Add the contribution graph
   let textContentForDownload = textContent;
 
-  textContent += createHorizontalContributionGraph(watchHistory);
+  textContent += createVerticalContributionGraph(watchHistory);
   displayGraphInBrowser(textContent);
 
   textContentForDownload += createContributionGraph(watchHistory);
@@ -318,15 +318,23 @@ function createContributionGraph(watchHistory) {
           (7 * 24 * 60 * 60 * 1000)
       );
 
-      graphOutput += "    "; // Reduced from 5 spaces to 4 to align with 3-letter day names
+      graphOutput += "     Week\n"; // 5 spaces before "Week"
+
+      graphOutput += "    "; // 4 spaces before week numbers (one more than before)
       for (let week = 1; week <= weeks.length; week++) {
         if (
           year < today.getFullYear() ||
           (year == today.getFullYear() && week <= currentWeekNumber)
         ) {
-          // Pad single-digit weeks with a leading zero to maintain alignment
-          const weekNum = week < 10 ? ` W${week}` : `W${week}`;
-          graphOutput += weekNum.padEnd(4);
+          let weekNum = "";
+          if (week <= 9) {
+            weekNum = `${week} `; // Single digit number + space
+          } else if (week >= 40) {
+            weekNum = `${week}`; // Double digit number
+          } else {
+            weekNum = "· "; // Single dot + space for middle weeks
+          }
+          graphOutput += weekNum;
         }
       }
       graphOutput += "\n";
@@ -338,10 +346,10 @@ function createContributionGraph(watchHistory) {
         for (let weekIndex = 0; weekIndex < weeks.length; weekIndex++) {
           const date = weeks[weekIndex][dayIndex];
           if (date === null) {
-            graphOutput += "    "; // Four spaces for null dates (no symbols)
+            graphOutput += "  "; // Two spaces for null dates
           } else {
             const hasWatch = daysWatched.has(date);
-            graphOutput += hasWatch ? "██  " : "░░  ";
+            graphOutput += hasWatch ? "■ " : "· "; // Single character + space
           }
         }
         graphOutput += "\n";
@@ -351,13 +359,13 @@ function createContributionGraph(watchHistory) {
         year
       ].toFixed(1)}\n`;
       graphOutput += `Total days watched in ${year}: ${daysWatched.size}\n`;
-      graphOutput += "Legend: ██ = Watched, ░░ = No Activity\n\n";
+      graphOutput += "Legend: ■ = Watched, • = No Activity\n\n";
     });
 
   return graphOutput;
 }
 
-function createHorizontalContributionGraph(watchHistory) {
+function createVerticalContributionGraph(watchHistory) {
   // Group watch history by year
   const watchesByYear = {};
   const hoursPerYear = {};
@@ -430,7 +438,7 @@ function createHorizontalContributionGraph(watchHistory) {
       if (currentWeek.length) weeks.push(currentWeek);
 
       // Display header with day names
-      graphOutput += "    "; // 4 spaces before week numbers
+      graphOutput += "     "; // 5 spaces before day names
       daysOfWeek.forEach((day) => {
         graphOutput += day.padEnd(4);
       });
@@ -446,14 +454,15 @@ function createHorizontalContributionGraph(watchHistory) {
             ) ||
           year < today.getFullYear()
         ) {
-          graphOutput += `W${String(weekIndex + 1).padStart(2, "0")}: `;
+          // Format week number consistently with W prefix and padding
+          graphOutput += `W${String(weekIndex + 1).padStart(2, "0")}: `; // e.g., "W01: ", "W02: "
 
           week.forEach((date) => {
             if (date === null) {
-              graphOutput += "    "; // Just 4 spaces for null dates (no symbols)
+              graphOutput += "    "; // 4 spaces for null dates
             } else {
               const hasWatch = daysWatched.has(date);
-              graphOutput += hasWatch ? "██ " : "░░ ";
+              graphOutput += hasWatch ? "██  " : "░░  "; // Two characters + two spaces
             }
           });
           graphOutput += "\n";
