@@ -1,4 +1,4 @@
-# Netflix Watch History Analysis Script
+# Netflix Watch History Script
 
 This script analyzes your Netflix viewing history to show you detailed statistics about your watching habits, including total time spent and a visual activity graph.
 
@@ -8,7 +8,7 @@ This script analyzes your Netflix viewing history to show you detailed statistic
 2. Log in to your Netflix account if needed
 3. Open your browser's Developer Tools (usually F12 or right-click -> Inspect)
 4. Go to the Console tab in Developer Tools
-5. Copy and paste the entire script into the console
+5. Copy and paste the entire content of `script.js` into the console
 6. Press Enter to run the script
 
 > **Note:** You can stop the script at any time by refreshing the page (F5)
