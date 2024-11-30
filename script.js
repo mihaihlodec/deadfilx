@@ -1,6 +1,6 @@
-const MAX_ENTRIES = -1; // Set this to any number you want, or -1 for all entries
+const MAX_ENTRIES = 5; // Set this to a number of titles you want to process, or -1 for all entries/episodes/movies
 const HOURLY_RATE = 45;
-const FETCH_DURATION_API_DELAY_MS = 250; // 250ms = 1/4 second
+const FETCH_DURATION_API_DELAY_MS = 500; // 500ms = 1/2 second
 
 async function fetchDuration(videoId) {
   try {
